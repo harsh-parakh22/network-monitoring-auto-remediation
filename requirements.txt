@@ -1,0 +1,6 @@
+pydantic>=2.7
+pydantic-settings>=2.3
+PyYAML>=6.0
+prometheus-client>=0.20
+fastapi>=0.111
+uvicorn>=0.30

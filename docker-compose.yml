@@ -1,0 +1,112 @@
+name: netmon
+
+x-sim-node: &sim-node
+  build:
+    context: ./infrastructure/docker
+    dockerfile: Dockerfile.simnode
+  restart: unless-stopped
+  networks: [sim_net]
+  deploy:
+    resources:
+      limits:
+        cpus: "0.5"
+        memory: 128M
+
+services:
+  # ---------------- monitoring plane ----------------
+  monitor:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.monitor
+    container_name: monitor
+    volumes:
+      - ./configs/config.yaml:/etc/netmon/config.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock  # remediation (allowlisted, Phase 5)
+      - monitor-data:/app/data
+    networks: [sim_net, mon_net]
+    ports:
+      - "8000:8000"   # operational API
+      - "9091:9090"   # Prometheus metrics
+    cap_add:
+      - NET_RAW       # ICMP via ping binary; least privilege, not root
+    restart: unless-stopped
+    depends_on:
+      - app-01
+      - app-02
+      - db-01
+      - chaos-01
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: prometheus
+    volumes:
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infrastructure/prometheus/rules.yml:/etc/prometheus/rules.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    networks: [mon_net]
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./infrastructure/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infrastructure/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks: [mon_net]
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    depends_on: [prometheus]
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: alertmanager
+    volumes:
+      - ./infrastructure/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    networks: [mon_net]
+    ports:
+      - "9093:9093"
+    restart: unless-stopped
+
+  # ---------------- simulated infrastructure ----------------
+  app-01:
+    <<: *sim-node
+    environment: { TARGET_ROLE: "http+chaos", TARGET_PORT: "8080" }
+
+  app-02:
+    <<: *sim-node
+    environment: { TARGET_ROLE: "http+chaos", TARGET_PORT: "8080" }
+
+  db-01:
+    <<: *sim-node
+    environment: { TARGET_ROLE: "tcp", TARGET_PORT: "5432" }
+
+  chaos-01:
+    <<: *sim-node
+    environment: { TARGET_ROLE: "http+chaos", TARGET_PORT: "8080" }
+    cap_add:
+      - NET_ADMIN      # tc/netem latency + packet loss injection only
+
+networks:
+  sim_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+  mon_net:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  monitor-data:

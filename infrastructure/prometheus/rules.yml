@@ -1,0 +1,41 @@
+groups:
+  - name: netmon-alerts
+    rules:
+      - alert: TargetDown
+        expr: min by (target) (netmon_target_health) == 2
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Target {{ $labels.target }} is down"
+          runbook: docs/remediation.md
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, sum by (target, le) (rate(netmon_probe_duration_seconds_bucket[5m]))) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 probe latency above 500ms for {{ $labels.target }}"
+
+      - alert: PacketLoss
+        expr: netmon_packet_loss_ratio > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Packet loss above 5% for {{ $labels.target }}"
+
+      - alert: RemediationFailed
+        expr: increase(netmon_remediation_attempts_total{outcome="failed"}[15m]) > 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "Remediation failed for {{ $labels.target }} (policy {{ $labels.policy }}) — manual intervention required"
+
+      - alert: RepeatedFailure
+        expr: increase(netmon_target_state_changes_total{to_state="unhealthy"}[1h]) >= 3
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.target }} went unhealthy 3+ times in the last hour — flapping or recurring fault"

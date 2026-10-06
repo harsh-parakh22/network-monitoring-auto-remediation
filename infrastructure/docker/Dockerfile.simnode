@@ -1,0 +1,9 @@
+# Simulated infrastructure node. Non-root, no capabilities.
+FROM python:3.12-slim
+
+RUN useradd --create-home --shell /usr/sbin/nologin sim
+WORKDIR /app
+COPY sim_node.py .
+USER sim
+ENV TARGET_ROLE=http TARGET_PORT=8080
+CMD ["python", "sim_node.py"]

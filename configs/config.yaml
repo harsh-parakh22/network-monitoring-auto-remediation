@@ -1,0 +1,48 @@
+monitoring:
+  interval_seconds: 10
+  failure_threshold: 3
+  degraded_threshold: 1
+  recovery_threshold: 2
+  packet_loss_window: 20
+
+targets:
+  - name: app-01
+    host: app-01
+    port: 8080
+    checks: [icmp, tcp, http]
+    http_path: /health
+    interval_seconds: 10
+
+  - name: app-02
+    host: app-02
+    port: 8080
+    checks: [icmp, tcp, http]
+    http_path: /health
+    interval_seconds: 10
+
+  - name: db-01
+    host: db-01
+    port: 5432
+    checks: [icmp, tcp]
+    interval_seconds: 15
+
+  - name: chaos-01
+    host: chaos-01
+    port: 8080
+    checks: [icmp, tcp, http]
+    http_path: /health
+    interval_seconds: 10
+
+remediation:
+  enabled: true
+  policies:
+    service_down:
+      action: restart_container
+      max_attempts: 3
+      cooldown_seconds: 60
+      attempts_window_seconds: 900
+    container_down:
+      action: restart_container
+      max_attempts: 2
+      cooldown_seconds: 120
+      attempts_window_seconds: 900

@@ -1,0 +1,16 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: default
+  group_by: ["alertname", "target"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: default
+    webhook_configs:
+      # Placeholder: replace with Slack/PagerDuty/webhook of choice.
+      - url: "http://monitor:8000/alerts/webhook"
+        send_resolved: true
