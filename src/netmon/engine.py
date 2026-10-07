@@ -41,6 +41,7 @@ class TargetRunner:
         target_cfg: TargetConfig,
         probes: list[Probe] | None = None,
         on_failure_classified: Callable[[TargetConfig, FailureClass], None] | None = None,
+        on_recovered: Callable[[str], None] | None = None,
     ) -> None:
         self.target_cfg = target_cfg
         self._config = config
@@ -53,6 +54,7 @@ class TargetRunner:
             self._classifier.register(f"{target_cfg.name}:{probe_type.value}", machine)
         self._loss_window: deque[bool] = deque(maxlen=config.packet_loss_window)
         self._on_failure_classified = on_failure_classified
+        self._on_recovered = on_recovered
         self.incident_open = False
 
     async def run_once(self) -> list[ProbeResult]:
@@ -116,6 +118,10 @@ class TargetRunner:
             )
             if transition.to_state is HealthState.UNHEALTHY:
                 self._handle_unhealthy()
+            elif transition.to_state is HealthState.HEALTHY:
+                self.incident_open = False
+                if self._on_recovered is not None:
+                    self._on_recovered(name)
         else:
             logger.debug("probe result", extra=log_extra)
 
@@ -143,6 +149,7 @@ class MonitorEngine:
         self,
         config: AppConfig,
         on_failure_classified: Callable[[TargetConfig, FailureClass], None] | None = None,
+        on_recovered: Callable[[str], None] | None = None,
         probe_factory: Callable[[TargetConfig], list[Probe]] = build_probes,
     ) -> None:
         self._config = config
@@ -154,6 +161,7 @@ class MonitorEngine:
                 t,
                 probes=None if probe_factory is build_probes else probe_factory(t),
                 on_failure_classified=on_failure_classified,
+                on_recovered=on_recovered,
             )
             for t in config.targets
         ]

@@ -82,12 +82,21 @@ async def test_tcp_up_http_down_is_app_unhealthy():
 
 
 async def test_recovery_after_failure_closes_incident():
-    captured: list = []
-    runner = make_runner({ProbeType.TCP: [False, False, False, True, True]}, captured)
+    recovered: list[str] = []
+    cfg_target = TargetConfig(name="t1", host="h", checks=[ProbeType.TCP])
+    probes = [FakeProbe(ProbeType.TCP, [False, False, False, True, True])]
+
+    def on_recovered(name: str) -> None:
+        recovered.append(name)
+
+    runner = TargetRunner(
+        MonitoringConfig(), cfg_target, probes=probes, on_recovered=on_recovered
+    )
     for _ in range(5):
         await runner.run_once()
-    assert runner.incident_open  # stays open until remediation layer closes it
-    # metrics should show healthy state now
+    # Recovery clears the runner's incident flag and notifies the orchestrator.
+    assert runner.incident_open is False
+    assert recovered == ["t1"]
     from netmon.metrics import registry
 
     value = registry.TARGET_HEALTH.labels(target="t1", probe="tcp")._value.get()
