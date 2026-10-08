@@ -54,3 +54,8 @@ mypy_path = "src"
 
 [tool.bandit]
 exclude_dirs = ["tests", ".venv"]
+# B104: the API deliberately binds 0.0.0.0 — a container serving the
+#       Prometheus/API on internal docker networks.
+# B310: urllib.urlopen against config-defined http:// targets; scheme is
+#       hardcoded, host/path pydantic-validated. No user-controlled URLs.
+skips = ["B104", "B310"]

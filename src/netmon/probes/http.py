@@ -87,8 +87,9 @@ class HTTPProbe(Probe):
         )
 
     def _fetch_blocking(self) -> tuple[int, str]:
-        # S310: the scheme is hardcoded here and the host/path come from
-        # validated config — no user-controlled URL ever reaches this call.
+        # Scheme hardcoded to http:// and host/path come from pydantic-
+        # validated config: no user-controlled URL reaches this call.
+        # (Bandit B310 suppressed centrally in pyproject [tool.bandit].)
         req = urllib.request.Request(self.url, method="GET", headers={"User-Agent": "netmon/0.1"})  # noqa: S310
         with urllib.request.urlopen(req, timeout=self.target.timeout_seconds) as resp:  # noqa: S310
             return resp.status, resp.read(4096).decode("utf-8", errors="replace")

@@ -44,9 +44,11 @@ async def main() -> None:
     for sig in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(sig, stop.set)
 
-    metrics_server, _ = await start_http_server(metrics_port)  # type: ignore[misc]
+    # Synchronous: starts the WSGRefactory server in a daemon thread.
+    metrics_server, _ = start_http_server(metrics_port)
     # Bind all interfaces: this is a container serving Prometheus/API on the
     # internal docker networks.
+    # Container serving Prometheus/API on internal docker networks.
     uv_config = uvicorn.Config(
         api_app, host="0.0.0.0", port=api_port, log_level="warning"  # noqa: S104
     )
@@ -58,7 +60,8 @@ async def main() -> None:
     finally:
         uv_server.should_exit = True
         await api_task
-        metrics_server.close()
+        metrics_server.shutdown()
+        metrics_server.server_close()
         store.close()
         logger.info("monitor stopped cleanly")
 

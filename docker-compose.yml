@@ -48,7 +48,7 @@ services:
       - --storage.tsdb.retention.time=7d
     networks: [mon_net]
     ports:
-      - "9090:9090"
+      - "19090:9090"
     restart: unless-stopped
 
   grafana:
@@ -64,7 +64,7 @@ services:
       - ./infrastructure/grafana/dashboards:/var/lib/grafana/dashboards:ro
     networks: [mon_net]
     ports:
-      - "3000:3000"
+      - "13000:3000"
     restart: unless-stopped
     depends_on: [prometheus]
 

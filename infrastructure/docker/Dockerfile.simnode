@@ -1,7 +1,11 @@
 # Simulated infrastructure node. Non-root, no capabilities.
 FROM python:3.12-slim
 
-RUN useradd --create-home --shell /usr/sbin/nologin sim
+# iproute2 provides tc/netem for latency & packet-loss injection on chaos nodes.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends iproute2 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --shell /usr/sbin/nologin sim
 WORKDIR /app
 COPY sim_node.py .
 USER sim
