@@ -4,3 +4,4 @@ PyYAML>=6.0
 prometheus-client>=0.20
 fastapi>=0.111
 uvicorn>=0.30
+docker>=7.1

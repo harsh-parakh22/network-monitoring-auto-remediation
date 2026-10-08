@@ -7,8 +7,8 @@ Security model:
 - Every action receives only typed, validated arguments (container name is
   checked against ^[a-zA-Z0-9][a-zA-Z0-9_.-]*$) — never interpolated into
   a shell string.
-- Shell is never used: docker CLI is invoked with an argv list via
-  subprocess without shell=True.
+- Docker is driven through the official Python SDK — no CLI subprocess,
+  no shell, no string interpolation anywhere.
 """
 
 from __future__ import annotations
@@ -18,10 +18,13 @@ import logging
 import re
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from typing import Any
 
 logger = logging.getLogger("netmon.remediation")
 
 _CONTAINER_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.-]*$")
+
+_DOCKER_TIMEOUT = 30  # seconds for any single docker API call
 
 
 class ActionError(Exception):
@@ -44,35 +47,37 @@ def validate_container_name(name: str) -> str:
     return name
 
 
-async def _run_docker(*args: str) -> ActionResult:
-    """Run the docker CLI with an argv list — no shell, no interpolation."""
-    proc = await asyncio.create_subprocess_exec(
-        "docker", *args,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
+async def _run_container_op(target: str, op: str) -> ActionResult:
+    """restart/start via the docker SDK, executed off the event loop."""
+    name = validate_container_name(target)
+
+    def _do() -> Any:
+        import docker
+
+        client = docker.from_env(timeout=_DOCKER_TIMEOUT)
+        getattr(client.containers.get(name), op)(timeout=10)
+
     try:
-        _, stderr = await asyncio.wait_for(proc.communicate(), timeout=30)
-    except TimeoutError:
-        proc.kill()
-        return ActionResult(success=False, detail="docker command timed out")
-    ok = proc.returncode == 0
-    detail = stderr.decode(errors="replace").strip() if not ok else "ok"
-    return ActionResult(success=ok, detail=detail)
+        await asyncio.wait_for(asyncio.to_thread(_do), timeout=_DOCKER_TIMEOUT)
+    except Exception as e:
+        detail = f"docker {op} failed: {e.__class__.__name__}: {e}"
+        logger.warning(
+            "remediation docker op failed",
+            extra={"target": name, "detail": detail},
+        )
+        return ActionResult(success=False, detail=detail)
+    logger.info("remediation action: %s_container", op, extra={"target": name})
+    return ActionResult(success=True, detail=f"{op} ok")
 
 
 async def restart_container(target: str) -> ActionResult:
     """Restart the Docker container named after the target."""
-    name = validate_container_name(target)
-    logger.info("remediation action: restart_container", extra={"target": name})
-    return await _run_docker("restart", name)
+    return await _run_container_op(target, "restart")
 
 
 async def start_container(target: str) -> ActionResult:
     """Start a stopped Docker container (no-op if already running)."""
-    name = validate_container_name(target)
-    logger.info("remediation action: start_container", extra={"target": name})
-    return await _run_docker("start", name)
+    return await _run_container_op(target, "start")
 
 
 class ActionRegistry:
