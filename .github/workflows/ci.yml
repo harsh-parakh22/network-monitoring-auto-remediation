@@ -19,6 +19,7 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -26,7 +27,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
       # Linux runner: ICMP and RST-on-closed-port tests execute here.
-      - run: pytest tests -q --cov=netmon --cov-report=term
+      - run: pytest tests -q
 
   security:
     runs-on: ubuntu-latest

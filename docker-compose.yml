@@ -81,18 +81,22 @@ services:
   # ---------------- simulated infrastructure ----------------
   app-01:
     <<: *sim-node
+    container_name: app-01   # remediation runs `docker restart app-01` by target name
     environment: { TARGET_ROLE: "http+chaos", TARGET_PORT: "8080" }
 
   app-02:
     <<: *sim-node
+    container_name: app-02
     environment: { TARGET_ROLE: "http+chaos", TARGET_PORT: "8080" }
 
   db-01:
     <<: *sim-node
+    container_name: db-01
     environment: { TARGET_ROLE: "tcp", TARGET_PORT: "5432" }
 
   chaos-01:
     <<: *sim-node
+    container_name: chaos-01
     environment: { TARGET_ROLE: "http+chaos", TARGET_PORT: "8080" }
     cap_add:
       - NET_ADMIN      # tc/netem latency + packet loss injection only
