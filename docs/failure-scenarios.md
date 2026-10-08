@@ -3,21 +3,30 @@
 One command each (`scripts/failure_injection/inject.sh <scenario>`), then
 `docker compose logs -f monitor` or the Grafana dashboard.
 
-## Scenario 1 — Container stopped (`container-stop`)
+## Scenario 1 — Service crash (`container-stop` / `crash-process`)
+
+Kills the **service process** inside the container while the container
+(the "host") stays up. Docker's own restart policy is deliberately off for
+sim nodes — the remediation engine is the self-healing layer here.
 
 ```bash
-docker stop app-01
+./scripts/failure_injection/inject.sh container-stop
 ```
 
 Expected timeline (10s interval, thresholds 3/2):
 
 ```text
-t+0..30s   tcp/http probes fail 3x -> UNHEALTHY, incident opens
+t+0..30s   tcp/http fail 3x, ICMP stays green -> UNHEALTHY, incident opens
            classifier: ICMP ok + TCP refused = service_down
 t+30s      remediation: restart_container (cooldown, circuit breaker apply)
 t+30..40s  verification probes: 2 consecutive successes -> RECOVERED
 t+40s      incident closed, remediated=true, MTTR recorded
 ```
+
+Note: `docker stop app-01` instead is a *host* failure in this simulation —
+ICMP dies with the container, the classifier says `host_unreachable`, and
+by design there is no remediation policy for it (restarts don't fix dead
+hosts; a human does). That distinction is the classifier working.
 
 ## Scenario 2 — Port failure (`port-fail`)
 

@@ -4,7 +4,10 @@ x-sim-node: &sim-node
   build:
     context: ./infrastructure/docker
     dockerfile: Dockerfile.simnode
-  restart: unless-stopped
+  # Docker's own restart policy is intentionally OFF for sim nodes:
+  # the remediation engine is the self-healing layer in this system.
+  # (A silently-restarting container would mask failures from monitoring.)
+  restart: "no"
   networks: [sim_net]
   deploy:
     resources:

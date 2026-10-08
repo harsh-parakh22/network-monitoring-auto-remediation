@@ -21,8 +21,10 @@ EOF
 }
 
 scenario_container_stop() {
-  echo ">> Stopping app-01 container (expect: service_down -> restart_container remediation)"
-  docker stop app-01
+  # Kill the SERVICE process inside app-01 while the container (host) stays
+  # up: ICMP ok + TCP refused -> service_down -> restart_container remediation.
+  echo ">> Crashing app-01 service process (container stays up -> service_down -> auto-restart)"
+  docker exec app-01 python -c "import urllib.request; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8080/crash', method='POST'))"
 }
 
 scenario_port_fail() {
@@ -56,8 +58,8 @@ scenario_http_recover() {
 }
 
 scenario_crash_process() {
-  echo ">> Killing app-01 main process (container restart policy may revive it)"
-  docker exec app-01 python -c "import os,signal; [os.kill(int(p), signal.SIGKILL) for p in os.listdir('/proc') if p.isdigit() and open(f'/proc/{p}/cmdline','rb').read().find(b'sim_node') >= 0]"
+  echo ">> Crashing app-02 service process (same as container-stop, other target)"
+  docker exec app-02 python -c "import urllib.request; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8080/crash', method='POST'))"
 }
 
 scenario_recover_all() {

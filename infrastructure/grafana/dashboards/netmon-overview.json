@@ -1,9 +1,14 @@
 {
-  "annotations": { "list": [] },
+  "annotations": {
+    "list": []
+  },
   "editable": true,
   "graphTooltip": 1,
   "refresh": "10s",
-  "time": { "from": "now-1h", "to": "now" },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "templating": {
     "list": [
       {
@@ -14,7 +19,10 @@
         "query": "label_values(netmon_target_health, target)",
         "includeAll": true,
         "multi": true,
-        "current": { "text": "All", "value": "$__all" }
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        }
       }
     ]
   },
@@ -22,107 +30,341 @@
     {
       "type": "row",
       "title": "Overview",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      }
     },
     {
       "type": "stat",
       "title": "Monitored Targets",
-      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
-      "targets": [{ "expr": "count(count by (target) (netmon_target_health))", "refId": "A" }]
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "targets": [
+        {
+          "expr": "count(count by (target) (netmon_target_health))",
+          "refId": "A"
+        }
+      ]
     },
     {
       "type": "stat",
       "title": "Healthy",
-      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
-      "fieldConfig": { "defaults": { "color": { "mode": "fixed" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] } } },
-      "targets": [{ "expr": "count(netmon_target_health == 0)", "refId": "A" }]
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "count(min by (target) (netmon_target_health) == 0)",
+          "refId": "A"
+        }
+      ]
     },
     {
       "type": "stat",
       "title": "Degraded",
-      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
-      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }] } } },
-      "targets": [{ "expr": "count(netmon_target_health == 1)", "refId": "A" }]
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "count(min by (target) (netmon_target_health) == 1) or vector(0)",
+          "refId": "A"
+        }
+      ]
     },
     {
       "type": "stat",
       "title": "Unhealthy",
-      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
-      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } },
-      "targets": [{ "expr": "count(netmon_target_health == 2)", "refId": "A" }]
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "count(min by (target) (netmon_target_health) == 2) or vector(0)",
+          "refId": "A"
+        }
+      ]
     },
     {
       "type": "stat",
       "title": "Active Incidents",
-      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
-      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } },
-      "targets": [{ "expr": "netmon_active_incidents", "refId": "A" }]
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "netmon_active_incidents",
+          "refId": "A"
+        }
+      ]
     },
     {
       "type": "stat",
       "title": "MTTR (avg)",
       "description": "Mean time to repair over resolved incidents",
-      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
-      "fieldConfig": { "defaults": { "unit": "s", "decimals": 1 } },
-      "targets": [{ "expr": "avg(netmon_incident_duration_seconds)", "refId": "A" }]
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1
+        }
+      },
+      "targets": [
+        {
+          "expr": "avg(netmon_incident_duration_seconds)",
+          "refId": "A"
+        }
+      ]
     },
     {
       "type": "row",
       "title": "Health & Latency",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 }
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      }
     },
     {
       "type": "timeseries",
       "title": "Target Health State (0=healthy 1=degraded 2=unhealthy 3=recovering)",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
-      "fieldConfig": { "defaults": { "custom": { "stepAfter": "stepBefore" }, "min": 0, "max": 3 } },
-      "targets": [{ "expr": "netmon_target_health{target=~\"$target\"}", "legendFormat": "{{target}}/{{probe}}", "refId": "A" }]
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "stepAfter": "stepBefore"
+          },
+          "min": 0,
+          "max": 3
+        }
+      },
+      "targets": [
+        {
+          "expr": "netmon_target_health{target=~\"$target\"}",
+          "legendFormat": "{{target}}/{{probe}}",
+          "refId": "A"
+        }
+      ]
     },
     {
       "type": "timeseries",
       "title": "Probe Latency p95 / median",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
-      "fieldConfig": { "defaults": { "unit": "s" } },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
       "targets": [
-        { "expr": "histogram_quantile(0.95, sum by (target, le) (rate(netmon_probe_duration_seconds_bucket{target=~\"$target\"}[5m])))", "legendFormat": "p95 {{target}}", "refId": "A" },
-        { "expr": "histogram_quantile(0.5, sum by (target, le) (rate(netmon_probe_duration_seconds_bucket{target=~\"$target\"}[5m])))", "legendFormat": "median {{target}}", "refId": "B" }
+        {
+          "expr": "histogram_quantile(0.95, sum by (target, le) (rate(netmon_probe_duration_seconds_bucket{target=~\"$target\"}[5m])))",
+          "legendFormat": "p95 {{target}}",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.5, sum by (target, le) (rate(netmon_probe_duration_seconds_bucket{target=~\"$target\"}[5m])))",
+          "legendFormat": "median {{target}}",
+          "refId": "B"
+        }
       ]
     },
     {
       "type": "row",
       "title": "Network",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 }
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      }
     },
     {
       "type": "timeseries",
       "title": "Packet Loss Ratio",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
-      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } },
-      "targets": [{ "expr": "netmon_packet_loss_ratio{target=~\"$target\"}", "legendFormat": "{{target}}", "refId": "A" }]
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 15
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        }
+      },
+      "targets": [
+        {
+          "expr": "netmon_packet_loss_ratio{target=~\"$target\"}",
+          "legendFormat": "{{target}}",
+          "refId": "A"
+        }
+      ]
     },
     {
       "type": "timeseries",
       "title": "TCP Connect Failures by Error Class (rate)",
       "description": "refused = port closed (process down); timeout = dropped (host down / filtered)",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
-      "targets": [{ "expr": "sum by (target, error_class) (rate(netmon_probe_failures_total{probe=\"tcp\"}[5m]))", "legendFormat": "{{target}} {{error_class}}", "refId": "A" }]
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 15
+      },
+      "targets": [
+        {
+          "expr": "sum by (target, error_class) (rate(netmon_probe_failures_total{probe=\"tcp\"}[5m]))",
+          "legendFormat": "{{target}} {{error_class}}",
+          "refId": "A"
+        }
+      ]
     },
     {
       "type": "row",
       "title": "Remediation",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 23 }
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      }
     },
     {
       "type": "timeseries",
       "title": "Remediation Outcomes (rate)",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
-      "targets": [{ "expr": "sum by (target, outcome) (rate(netmon_remediation_attempts_total[5m]))", "legendFormat": "{{target}} {{outcome}}", "refId": "A" }]
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "targets": [
+        {
+          "expr": "sum by (target, outcome) (rate(netmon_remediation_attempts_total[5m]))",
+          "legendFormat": "{{target}} {{outcome}}",
+          "refId": "A"
+        }
+      ]
     },
     {
       "type": "timeseries",
       "title": "State Changes (flapping detector)",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
-      "targets": [{ "expr": "sum by (target) (increase(netmon_target_state_changes_total[1h]))", "legendFormat": "{{target}}", "refId": "A" }]
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "targets": [
+        {
+          "expr": "sum by (target) (increase(netmon_target_state_changes_total[1h]))",
+          "legendFormat": "{{target}}",
+          "refId": "A"
+        }
+      ]
     }
   ],
   "schemaVersion": 39,

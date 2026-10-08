@@ -8,15 +8,15 @@ say() { echo; echo "=== $* ==="; sleep 2; }
 say "1/6 Fleet is healthy — watch Grafana (localhost:3000) or the API"
 curl -s http://localhost:8000/targets | python3 -m json.tool || true
 
-say "2/6 Injecting failure: killing app-01 container"
-docker stop app-01
+say "2/6 Injecting failure: crashing the app-01 service process"
+docker exec app-01 python -c "import urllib.request; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8080/crash', method='POST'))"
 
 say "3/6 Monitoring detects it (3 consecutive failures -> UNHEALTHY -> incident)"
 sleep 35
 curl -s http://localhost:8000/incidents | python3 -m json.tool || true
 
 say "4/6 Remediation engine restarts the container (policy: service_down)"
-docker start app-01
+echo "(the engine does this automatically — watching...)"
 
 say "5/6 Verification probes confirm recovery -> RECOVERING -> HEALTHY"
 sleep 30
